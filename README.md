@@ -19,6 +19,16 @@
 
 ---
 
+## 页面预览
+
+| 账号额度 | 实时路由 | Cloudflare 远程配置 |
+| :---: | :---: | :---: |
+| <img src="screenshots/demo_quotas.png" alt="账号额度，邮箱和网关名称已脱敏" width="260"> | <img src="screenshots/demo_routing.png" alt="实时路由，邮箱和私人网关域名已脱敏" width="260"> | <img src="screenshots/demo_cloudflare.jpg" alt="Cloudflare Tunnel 远程配置示例" width="260"> |
+
+额度和路由截图已遮盖个人信息。Cloudflare 截图展示配置填写方式，使用示例域名 `https://magpie.example.com`，密钥留空。实际使用时，填写自己的 Tunnel 域名和网关密钥。
+
+---
+
 ## ✨ 核心特性
 
 ### 1. 🔀 实时路由决策与拓扑分析 (Routing & Decisions)
