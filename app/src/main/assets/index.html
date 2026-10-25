@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>MagpieBoard</title>
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/routing.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <div style="display:flex; align-items:center;">
+          <span class="brand-title">MagpieBoard</span>
+          <span id="magpieVersion" class="brand-version">v0.1</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div id="profileChip" class="profile-chip" title="切换网关">
+        <div id="statusDot" class="status-dot connecting"></div>
+        <span id="profileName" class="label">连接中...</span>
+      </div>
+      <button id="btnRefresh" class="icon-btn" title="刷新数据">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-1.19"/>
+        </svg>
+      </button>
+      <button id="btnSettings" class="icon-btn" title="网关设置">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="nav-tabs">
+    <button class="tab-btn active" data-tab="quotas">额度 (Quotas)</button>
+    <button class="tab-btn" data-tab="usage">用量 (Usage)</button>
+    <button class="tab-btn" data-tab="routing">路由 (Routing)</button>
+    <button class="tab-btn" data-tab="requests">明细 (Requests)</button>
+  </nav>
+
+  <!-- Main Views -->
+  <main class="view-container">
+    <!-- Global Status / Error Message if any -->
+    <div id="connectionBanner" style="display:none; margin-bottom:12px; padding:10px 14px; border-radius:var(--radius-md); font-size:12.5px; background:var(--danger-bg); border:1px solid rgba(239,68,68,0.3); color:var(--danger);">
+      <span id="bannerText">连接网关失败，请检查网关地址与 Key</span>
+      <span id="bannerAction" style="float:right; text-decoration:underline; cursor:pointer;" onclick="app.openSettings()">去配置</span>
+    </div>
+
+    <!-- 1. Quotas View -->
+    <section id="view-quotas" class="tab-view">
+      <div class="summary-strip">
+        <div class="summary-chip">
+          <div class="chip-label">总账号数</div>
+          <div id="statTotalAccounts" class="chip-value">0</div>
+        </div>
+        <div class="summary-chip">
+          <div class="chip-label">活跃订阅</div>
+          <div id="statActiveSubs" class="chip-value">0</div>
+        </div>
+        <div class="summary-chip">
+          <div class="chip-label">钱包总额</div>
+          <div id="statTotalBalance" class="chip-value">--</div>
+        </div>
+      </div>
+      <div id="quotasList" class="card-list">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- 2. Usage View -->
+    <section id="view-usage" class="tab-view" style="display:none;">
+      <div class="period-switch">
+        <button class="period-btn active" data-period="today">今日</button>
+        <button class="period-btn" data-period="7d">近 7 天</button>
+        <button class="period-btn" data-period="30d">近 30 天</button>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-card wide">
+          <div class="metric-label">统计花费 (Cost)</div>
+          <div id="metricCost" class="metric-val">$0.00</div>
+          <div id="metricCostSub" class="metric-sub">折算汇率或官方定价</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">总请求数 (Calls)</div>
+          <div id="metricCalls" class="metric-val">0</div>
+          <div id="metricCallsSub" class="metric-sub">错误: 0 (0%)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">缓存命中率 (Cache)</div>
+          <div id="metricCacheHit" class="metric-val">0.0%</div>
+          <div id="metricCacheSub" class="metric-sub">读取 0 Tokens</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">输入 Tokens (Input)</div>
+          <div id="metricInput" class="metric-val">0</div>
+          <div id="metricInputSub" class="metric-sub">写入: 0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">输出 Tokens (Output)</div>
+          <div id="metricOutput" class="metric-val">0</div>
+          <div id="metricOutputSub" class="metric-sub">思考: 0</div>
+        </div>
+      </div>
+
+      <!-- Activity Timeline Chart -->
+      <div class="chart-card">
+        <div class="chart-title" id="chartTitle">调用趋势 (Hourly Calls)</div>
+        <div id="chartContainer" class="chart-bars-container">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Top Models Ranking -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:13px; font-weight:600; margin-bottom:10px; color:var(--text-main);">模型用量分布 (Models)</div>
+        <div id="modelsUsageList">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Agent Breakdown -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:13px; font-weight:600; margin-bottom:10px; color:var(--text-main);">Agent 客户端分布 (Agents)</div>
+        <div id="agentsUsageList">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Routing Live Decisions View -->
+    <section id="view-routing" class="tab-view" style="display:none;">
+      <!-- Routing Header Bar -->
+      <div class="routing-header-bar">
+        <div class="routing-title">
+          <span class="routing-pulse"></span>
+          <span>路由 · 实时 · 网关正在做的决定</span>
+        </div>
+        <div class="routing-actions">
+          <button type="button" class="routing-chip-btn" id="btnToggleModelCatalog">模型总表</button>
+        </div>
+      </div>
+
+      <!-- Decision History Switcher -->
+      <div id="decisionSelectorRow" class="decision-selector-row">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- 1. Realtime Visual Flow Topology Diagram -->
+      <div id="topoContainer" class="topo-canvas">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- 2. Summary Row (Counters) -->
+      <div id="routeSummaryStats" class="route-summary-stats">
+        <div class="route-stat-col">
+          <div id="routeStatCalls" class="route-stat-val">--</div>
+          <div class="route-stat-lbl">请求总数</div>
+        </div>
+        <div class="route-stat-col">
+          <div id="routeStatReroutes" class="route-stat-val">--</div>
+          <div class="route-stat-lbl">智能改道</div>
+        </div>
+        <div class="route-stat-col">
+          <div id="routeStatErrors" class="route-stat-val">--</div>
+          <div class="route-stat-lbl">Agent错误</div>
+        </div>
+      </div>
+
+      <!-- 3. Decision Path Explanation -->
+      <div class="decision-card">
+        <div class="decision-title">
+          <span>最近一个请求是怎么路由的</span>
+          <span id="decisionTimestamp" style="font-size:11px; font-weight:normal; color:var(--text-dim); font-family:var(--font-mono);"></span>
+        </div>
+        <div id="decisionBulletsList">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- Timing breakdown bar -->
+        <div class="timing-section">
+          <div style="font-size:11px; color:var(--text-dim); margin-bottom:6px;">时间花在哪里 (Latency Breakdown)</div>
+          <div id="timingBarTrack" class="timing-bar-track">
+            <!-- Stacked bar segments -->
+          </div>
+          <div id="timingLegend" class="timing-legend">
+            <!-- Legend items -->
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Context Window & Cache Map -->
+      <div class="context-window-card">
+        <div class="context-header">
+          <span class="context-main-stat" id="contextMainStat">已用上下文: -- / -- token</span>
+          <span class="context-cache-badge" id="contextCacheBadge">--% 命中</span>
+        </div>
+        <div class="context-bar-track">
+          <div id="contextBarFill" class="context-bar-fill" style="width: 0%;"></div>
+        </div>
+
+        <!-- Treemap block grid -->
+        <div id="treemapGrid" class="treemap-grid">
+          <!-- Rendered by JS -->
+        </div>
+        <div id="contextLegend" style="display:flex; flex-wrap:wrap; gap:8px; font-size:10.5px; color:var(--text-dim);">
+          <!-- Legends for blocks -->
+        </div>
+      </div>
+
+      <!-- 5. Collapsible Full Model Catalog -->
+      <div id="modelCatalogSection" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--border-subtle);">
+        <div class="search-bar">
+          <input type="text" id="modelSearchInput" class="search-input" placeholder="搜索模型名称或厂商...">
+        </div>
+        <div id="providerFilters" class="provider-filters">
+          <div class="filter-chip active" data-filter="all">全部</div>
+        </div>
+        <div id="routingModelsList"></div>
+      </div>
+    </section>
+
+    <!-- 4. Requests View -->
+    <section id="view-requests" class="tab-view" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <span style="font-size:13px; font-weight:600;">近期请求记录</span>
+        <button id="btnToggleOnlyErrors" class="filter-chip" style="font-size:11px;">仅看错误</button>
+      </div>
+      <div id="requestsList">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+    <!-- Loading / Empty Overlay -->
+    <div id="stateContainer" class="state-box" style="display:none;">
+      <div id="stateTitle" class="state-title">正在加载...</div>
+      <div id="stateDesc" class="state-desc">正在从 Magpie 网关同步用量与配额</div>
+    </div>
+  </main>
+
+  <!-- Settings Modal Sheet -->
+  <div id="settingsModal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">网关与连接设置</div>
+        <button class="icon-btn" onclick="app.closeSettings()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">当前配置名称</label>
+        <input type="text" id="cfgProfileName" class="form-input" placeholder="例如：我的Magpie / 家里NAS / 远程网关">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Magpie 网关地址 (Gateway URL)</label>
+        <div class="form-row">
+          <input type="text" id="cfgGatewayUrl" class="form-input" placeholder="http://<局域网IP>:3425 或 https://<远程域名>">
+          <button type="button" class="btn-secondary" onclick="app.pasteToInput('cfgGatewayUrl')">粘贴</button>
+        </div>
+        <div class="quick-fill-row">
+          <span class="quick-chip" onclick="app.quickFillUrl('http://localhost:3425')">localhost:3425</span>
+          <span class="quick-chip" onclick="app.quickFillUrl('http://192.168.1.100:3425')">局域网示例</span>
+          <span class="quick-chip" onclick="app.quickFillUrl('https://')">https:// (远程)</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">网关密钥 (Gateway Key / lanKey)</label>
+        <div class="form-row">
+          <input type="password" id="cfgGatewayKey" class="form-input" placeholder="填入 settings.json 中的 lanKey 或自定义 Key">
+          <button type="button" class="btn-secondary" id="btnToggleKeyVisibility" onclick="app.toggleKeyVisibility()">显示</button>
+        </div>
+        <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
+          提示：Magpie 默认使用 Bearer 鉴权，支持受限网关密钥。
+        </div>
+      </div>
+
+      <div class="form-group">
+        <button type="button" class="btn-secondary" style="width:100%;" id="btnTestConn" onclick="app.testConnection()">
+          测试网关连通性
+        </button>
+        <div id="testResultBox" class="test-result-box"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">自动刷新频率</label>
+        <select id="cfgAutoRefresh" class="form-input" style="padding:10px;">
+          <option value="0">关闭自动刷新</option>
+          <option value="15000">每 15 秒</option>
+          <option value="30000" selected>每 30 秒</option>
+          <option value="60000">每 1 分钟</option>
+          <option value="300000">每 5 分钟</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-main); cursor:pointer;">
+          <input type="checkbox" id="cfgRedactEmail" checked style="width:16px; height:16px; accent-color:var(--accent);">
+          隐私保护：对账号邮箱进行脱敏（打码）
+        </label>
+      </div>
+
+      <button type="button" class="btn-primary" onclick="app.saveAndApplySettings()">
+        保存并立即连接
+      </button>
+
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:12px; color:var(--text-dim);">保存多个网关快速切换</span>
+        <button type="button" class="btn-secondary" style="font-size:11px; padding:6px 10px;" onclick="app.saveAsNewProfile()">保存为新配置</button>
+      </div>
+      <div id="savedProfilesList" style="margin-top:10px; display:flex; flex-direction:column; gap:6px;">
+        <!-- Profile items rendered here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Switcher Quick Sheet -->
+  <div id="profileSwitcherModal" class="modal-overlay">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <div class="modal-title">切换网关配置</div>
+        <button class="icon-btn" onclick="app.closeProfileSwitcher()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div id="quickProfilesContainer" style="display:flex; flex-direction:column; gap:8px;"></div>
+      <button type="button" class="btn-secondary" style="width:100%; margin-top:12px;" onclick="app.closeProfileSwitcher(); app.openSettings();">
+        + 新增或编辑网关配置
+      </button>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
