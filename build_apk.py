@@ -62,7 +62,7 @@ android_jar = os.path.join(platforms_dir, plat_versions[-1], "android.jar")
 res_zip = os.path.join(BUILD_DIR, "res.zip")
 unaligned_apk = os.path.join(APK_DIR, "unaligned.apk")
 aligned_apk = os.path.join(APK_DIR, "aligned.apk")
-output_apk = os.path.join(DIST_DIR, "MagpieBoard-v1.0.0.apk")
+output_apk = os.path.join(DIST_DIR, "MagpieBoard-Android-v1.0.0.apk")
 
 print("Step 1: Compiling resources with aapt2...")
 subprocess.check_call([
