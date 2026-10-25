@@ -83,10 +83,11 @@ body {
 }
 
 .brand-title {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.3px;
   color: #fff;
+  white-space: nowrap;
 }
 
 .brand-version {

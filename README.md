@@ -60,13 +60,13 @@
 
 ### 1. 下载预编译 APK
 你可以直接下载仓库预编译好的已签名 APK（仅约 **57 KB**）：
-- [下载最新版 APK (release/MagpieBoard-Android-v1.0.0.apk)](release/MagpieBoard-Android-v1.0.0.apk)
+- [下载最新版 APK (release/MagpieBoard-v1.0.0.apk)](release/MagpieBoard-v1.0.0.apk)
 
 ### 2. 通过 ADB 安装至手机
 确保手机已开启开发者选项与 USB / 无线调试：
 
 ```bash
-adb install -r release/MagpieBoard-Android-v1.0.0.apk
+adb install -r release/MagpieBoard-v1.0.0.apk
 ```
 
 ---
