@@ -127,3 +127,7 @@ python3 build_apk.py
 ## 📄 开源许可证
 
 本项目基于 [MIT 许可证](LICENSE) 开源。
+
+## 鸣谢
+
+- [LINUX DO](https://linux.do/)：真诚、友善、团结、专业的开源与技术讨论社区。
