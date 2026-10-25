@@ -21,10 +21,10 @@
 
 ## 📱 界面预览
 
-| 额度面板 (Quotas) | 实时路由与决策图 (Routing & Decisions) |
-|:---:|:---:|
-| <img src="screenshots/demo_quotas.png" width="360" alt="额度面板" /> | <img src="screenshots/demo_routing.png" width="360" alt="实时路由与决策图" /> |
-| 各账号配额窗口、重置倒计时、钱包余额 | 实时调用拓扑、候选账号列表、时序切分与上下文图谱 |
+| 额度看板 (Quotas) | 实时路由决策图 (Routing) | 远程穿透与诊断 (Cloudflare Tunnel) |
+|:---:|:---:|:---:|
+| <img src="screenshots/demo_quotas.png" width="260" alt="额度看板" /> | <img src="screenshots/demo_routing.png" width="260" alt="实时路由与决策图" /> | <img src="screenshots/demo_cloudflare.png" width="260" alt="Cloudflare 远程穿透配置" /> |
+| 各账号配额窗口、重置倒计时与钱包余额 | 实时调用拓扑、胜出与备选账号池、时序切分与上下文图谱 | Cloudflare Tunnel 远程 HTTPS 穿透配置与连通性即时诊断 |
 
 ---
 

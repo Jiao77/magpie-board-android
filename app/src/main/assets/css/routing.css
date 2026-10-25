@@ -123,28 +123,35 @@
 }
 
 .routing-group-header {
-  padding: 10px 12px;
+  padding: 10px 14px;
   background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
+  flex-direction: column;
+  gap: 3px;
+  cursor: pointer;
+}
+
+.routing-group-header-row {
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  cursor: pointer;
 }
 
 .routing-group-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   color: #fff;
+  white-space: nowrap;
 }
 
 .routing-group-desc {
   font-size: 11px;
   color: var(--text-dim);
-  padding: 8px 12px;
+  padding: 8px 14px;
   line-height: 1.45;
   background: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid var(--border-subtle);
@@ -159,9 +166,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 9px 12px;
+  padding: 10px 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-  font-size: 11.5px;
+  gap: 12px;
   transition: background 0.15s ease;
 }
 
@@ -174,16 +181,17 @@
   border-left: 3px solid var(--success);
 }
 
-.routing-acc-info {
+.routing-acc-left {
   display: flex;
   align-items: center;
-  gap: 8px;
-  overflow: hidden;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
 .routing-acc-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--text-dim);
   flex-shrink: 0;
@@ -194,34 +202,53 @@
   box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
 }
 
+.routing-acc-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
 .routing-acc-name {
   color: #fff;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 170px;
 }
 
 .routing-acc-plan {
   color: var(--text-dim);
-  font-size: 10.5px;
-}
-
-.routing-acc-status {
-  text-align: right;
-  font-family: var(--font-mono);
   font-size: 11px;
-  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
 }
 
-.routing-acc-status.hit {
+.routing-acc-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+
+.routing-acc-badge.hit {
   color: var(--success);
   font-weight: 600;
 }
 
-.routing-acc-status.idle {
+.routing-acc-badge.idle .acc-used {
+  color: var(--text-muted);
+}
+
+.routing-acc-badge.idle .acc-reset {
   color: var(--text-dim);
+  font-size: 10px;
 }
 
 /* Summary Stats Strip */

@@ -2,6 +2,7 @@ package com.magpie.monitor;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,6 +16,20 @@ import android.webkit.WebViewClient;
 
 public class MainActivity extends Activity {
     private WebView webView;
+
+    private static class MonitorWebViewClient extends WebViewClient {
+        private final MainActivity activity;
+        MonitorWebViewClient(MainActivity activity) {
+            this.activity = activity;
+        }
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            super.onPageFinished(view, url);
+            if (activity != null) {
+                activity.handleShowcaseIntent(activity.getIntent());
+            }
+        }
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -51,9 +66,23 @@ public class MainActivity extends Activity {
 
         webView.addJavascriptInterface(new WebAppInterface(this), "AndroidBridge");
         webView.setWebChromeClient(new WebChromeClient());
-        webView.setWebViewClient(new WebViewClient());
+        webView.setWebViewClient(new MonitorWebViewClient(this));
 
         webView.loadUrl("file:///android_asset/index.html");
+    }
+
+    void handleShowcaseIntent(Intent intent) {
+        if (intent != null && intent.getStringExtra("showcase") != null && webView != null) {
+            final String mode = intent.getStringExtra("showcase");
+            webView.evaluateJavascript("window.renderCleanShowcase && window.renderCleanShowcase('" + mode + "')", null);
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleShowcaseIntent(intent);
     }
 
     @Override

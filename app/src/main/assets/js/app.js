@@ -72,6 +72,7 @@
     currentTab: "quotas",
     currentPeriod: "today",
     activeProfileId: "",
+    editingProfileId: null,
     profiles: [],
     settings: {
       gatewayUrl: "",
@@ -184,7 +185,19 @@
 
   // Core App Object
   const app = {
-    init() {
+        init() {
+      const hash = window.location.hash || "";
+      if (hash.includes("routing")) {
+        this.bindEvents();
+        window.renderCleanShowcase("routing");
+        return;
+      }
+      if (hash.includes("quotas")) {
+        this.bindEvents();
+        window.renderCleanShowcase("quotas");
+        return;
+      }
+
       this.loadSettings();
       this.bindEvents();
       this.switchTab("quotas");
@@ -826,15 +839,15 @@
 
             accountsHtml += `
               <div class="routing-acc-row ${isWinner ? 'active' : ''}">
-                <div class="routing-acc-info">
+                <div class="routing-acc-left">
                   <div class="routing-acc-dot ${isWinner ? 'active' : ''}"></div>
-                  <div style="display:flex; flex-direction:column;">
+                  <div class="routing-acc-text">
                     <span class="routing-acc-name">${userDisplay}</span>
                     <span class="routing-acc-plan">${planDisplay} · ${targetModelShort}</span>
                   </div>
                 </div>
-                <div class="routing-acc-status ${isWinner ? 'hit' : 'idle'}">
-                  ${isWinner ? '回答了这个请求' : `已用 ${usedPct}% · ${resetInfo}`}
+                <div class="routing-acc-badge ${isWinner ? 'hit' : 'idle'}">
+                  ${isWinner ? '回答了这个请求' : `<span class="acc-used">已用 ${usedPct}%</span><span class="acc-reset">${resetInfo}</span>`}
                 </div>
               </div>
             `;
@@ -895,11 +908,16 @@
           <!-- Routing Group Accordion Box -->
           <div class="routing-group-box">
             <div class="routing-group-header">
-              <div class="routing-group-title">
-                <span class="status-dot connected"></span>
-                <span>${groupName} ${Math.max(groupAccounts.length, 1)} 个账号 · ${targetModelShort}</span>
+              <div class="routing-group-header-row">
+                <div class="routing-group-title">
+                  <span class="status-dot connected"></span>
+                  <span>${groupName} ${Math.max(groupAccounts.length, 1)} 个账号 · ${targetModelShort}</span>
+                </div>
+                <span class="badge" style="color:var(--success); font-size:10.5px;">${Math.max(groupAccounts.length, 1)} 个可用</span>
               </div>
-              <span style="font-size:11px; color:var(--text-muted);">${maskEmail(providerAccount)}: 回答了这个请求 · ${Math.max(groupAccounts.length, 1)} 个可用</span>
+              <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+                ${maskEmail(providerAccount)} 回答了这个请求
+              </div>
             </div>
             <div class="routing-group-desc">
               ${groupName} · 启用 ${Math.max(groupAccounts.length, 1)} 个。智能策略：有余量的账号中额度最先重置的排第一，以免剩余额度在重置时作废。以周额度为准；只有 5 小时额度的账号按 5 小时重置。用到 90% 以上的，等其他都无法响应时才用；失败休息中的排最后。
@@ -1187,45 +1205,67 @@
     },
 
     // 5. Settings & Profile Management
-    openSettings() {
+    openSettings(profileIdToEdit) {
       const modal = document.getElementById("settingsModal");
-      const active = AppState.profiles.find(p => p.id === AppState.activeProfileId) || {};
-
-      document.getElementById("cfgProfileName").value = active.name || "默认配置";
-      document.getElementById("cfgGatewayUrl").value = AppState.settings.gatewayUrl;
-      document.getElementById("cfgGatewayKey").value = AppState.settings.gatewayKey;
-      document.getElementById("cfgAutoRefresh").value = String(AppState.settings.autoRefresh);
-      document.getElementById("cfgRedactEmail").checked = AppState.settings.redactEmail;
-
       const testBox = document.getElementById("testResultBox");
-      testBox.style.display = "none";
+      if (testBox) testBox.style.display = "none";
+
+      if (!AppState.profiles || AppState.profiles.length === 0) {
+        this.startNewProfile();
+      } else {
+        const targetId = profileIdToEdit || AppState.activeProfileId;
+        const target = AppState.profiles.find(p => p.id === targetId) || AppState.profiles[0];
+        this.loadProfileIntoForm(target);
+      }
 
       this.renderSavedProfilesList();
       modal.classList.add("open");
     },
 
+    startNewProfile() {
+      AppState.editingProfileId = null;
+      document.getElementById("cfgProfileName").value = "";
+      document.getElementById("cfgGatewayUrl").value = "";
+      document.getElementById("cfgGatewayKey").value = "";
+      
+      const badge = document.getElementById("cfgModeBadge");
+      if (badge) badge.textContent = "新建空白配置";
+      
+      const btnSave = document.getElementById("btnSaveConfig");
+      if (btnSave) btnSave.textContent = "保存并添加新配置";
+
+      const testBox = document.getElementById("testResultBox");
+      if (testBox) testBox.style.display = "none";
+
+      const nameInput = document.getElementById("cfgProfileName");
+      if (nameInput) {
+        nameInput.focus();
+      }
+      Bridge.showToast("已切换为空白表单，请输入新网关配置");
+    },
+
+    loadProfileIntoForm(profile) {
+      if (!profile) return;
+      AppState.editingProfileId = profile.id;
+      document.getElementById("cfgProfileName").value = profile.name || "";
+      document.getElementById("cfgGatewayUrl").value = profile.url || "";
+      document.getElementById("cfgGatewayKey").value = profile.key || "";
+      document.getElementById("cfgAutoRefresh").value = String(AppState.settings.autoRefresh);
+      document.getElementById("cfgRedactEmail").checked = AppState.settings.redactEmail;
+
+      const badge = document.getElementById("cfgModeBadge");
+      if (badge) badge.textContent = "编辑当前配置";
+
+      const btnSave = document.getElementById("btnSaveConfig");
+      if (btnSave) btnSave.textContent = "保存配置并连接";
+
+      const testBox = document.getElementById("testResultBox");
+      if (testBox) testBox.style.display = "none";
+    },
+
     closeSettings() {
       const modal = document.getElementById("settingsModal");
       if (modal) modal.classList.remove("open");
-    },
-
-    async pasteToInput(inputId) {
-      const input = document.getElementById(inputId);
-      if (!input) return;
-
-      let text = Bridge.getClipboard();
-      if (!text && navigator.clipboard && navigator.clipboard.readText) {
-        try {
-          text = await navigator.clipboard.readText();
-        } catch (e) {}
-      }
-
-      if (text) {
-        input.value = text.trim();
-        Bridge.showToast("已成功粘贴剪贴板内容");
-      } else {
-        Bridge.showToast("剪贴板内容为空，请先复制密钥");
-      }
     },
 
     toggleKeyVisibility() {
@@ -1270,7 +1310,11 @@
         if (res.ok) {
           const info = res.data || {};
           testBox.className = "test-result-box success";
-          testBox.textContent = `连接成功 (${latency}ms)!\n网关版本: v${info.version || "0.1"}\n可用接口数: ${(info.apis || []).length}\n挂载模型数: ${info.models || 0}`;
+          testBox.textContent = `连接成功 (${latency}ms)!
+网关版本: v${info.version || "0.1"}
+可用接口数: ${(info.apis || []).length}
+挂载模型数: ${info.models || 0}
+已通过安全握手建立通信。`;
         } else {
           testBox.className = "test-result-box error";
           testBox.textContent = `网关返回 HTTP ${res.status}: ${JSON.stringify(res.data)}`;
@@ -1282,9 +1326,9 @@
     },
 
     saveAndApplySettings() {
-      const name = document.getElementById("cfgProfileName").value.trim() || "默认网关";
       const url = document.getElementById("cfgGatewayUrl").value.trim().replace(/\/+$/, "");
       const key = document.getElementById("cfgGatewayKey").value.trim();
+      let name = document.getElementById("cfgProfileName").value.trim();
       const autoRef = parseInt(document.getElementById("cfgAutoRefresh").value, 10);
       const redact = document.getElementById("cfgRedactEmail").checked;
 
@@ -1293,20 +1337,34 @@
         return;
       }
 
+      if (!name) {
+        name = url.replace(/^https?:\/\//, "").split("/")[0] || "新网关";
+      }
+
       AppState.settings.gatewayUrl = url;
       AppState.settings.gatewayKey = key;
       AppState.settings.autoRefresh = autoRef;
       AppState.settings.redactEmail = redact;
 
-      // Update active profile
-      let prof = AppState.profiles.find(p => p.id === AppState.activeProfileId);
-      if (prof) {
-        prof.name = name;
-        prof.url = url;
-        prof.key = key;
+      if (!AppState.editingProfileId) {
+        // Create brand new profile
+        const newId = "prof_" + Date.now();
+        const newProf = { id: newId, name, url, key };
+        AppState.profiles.push(newProf);
+        AppState.activeProfileId = newId;
+        Bridge.showToast(`已创建并切换到新配置: ${name}`);
       } else {
-        prof = { id: AppState.activeProfileId, name, url, key };
-        AppState.profiles.push(prof);
+        // Update existing profile
+        let prof = AppState.profiles.find(p => p.id === AppState.editingProfileId);
+        if (prof) {
+          prof.name = name;
+          prof.url = url;
+          prof.key = key;
+        } else {
+          AppState.profiles.push({ id: AppState.editingProfileId, name, url, key });
+        }
+        AppState.activeProfileId = AppState.editingProfileId;
+        Bridge.showToast(`已保存配置: ${name}`);
       }
 
       this.saveProfiles();
@@ -1317,28 +1375,10 @@
       this.updateProfileChipUI();
       this.setupAutoRefresh();
       this.closeSettings();
-      Bridge.showToast("已保存并应用配置");
 
-      // Reset cache and refresh
+      // Reset cache and fetch fresh
       AppState.cachedData = { gatewayInfo: null, quotas: null, usage: null, models: null, requests: null };
       this.refreshAll(true);
-    },
-
-    saveAsNewProfile() {
-      const name = prompt("请输入新配置名称：", "远程网关");
-      if (!name) return;
-      const url = document.getElementById("cfgGatewayUrl").value.trim().replace(/\/+$/, "");
-      const key = document.getElementById("cfgGatewayKey").value.trim();
-
-      const newId = "prof_" + Date.now();
-      AppState.profiles.push({ id: newId, name, url, key });
-      AppState.activeProfileId = newId;
-
-      this.saveProfiles();
-      Bridge.saveConfig("magpie_active_profile_id", newId);
-      this.renderSavedProfilesList();
-      this.updateProfileChipUI();
-      Bridge.showToast(`已创建并切换到配置: ${name}`);
     },
 
     renderSavedProfilesList() {
@@ -1346,17 +1386,22 @@
       if (!container) return;
       container.innerHTML = "";
 
+      if (!AppState.profiles || AppState.profiles.length === 0) {
+        container.innerHTML = `<div style="font-size:12px; color:var(--text-dim); padding:6px 0;">暂无保存的环境，可点击上方新建</div>`;
+        return;
+      }
+
       AppState.profiles.forEach(p => {
         const isCur = p.id === AppState.activeProfileId;
         const row = document.createElement("div");
         row.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:var(--bg-inset); padding:8px 12px; border-radius:var(--radius-sm); border:1px solid var(--border-subtle); font-size:12px;";
 
         row.innerHTML = `
-          <div>
+          <div style="cursor:pointer; flex:1; min-width:0; margin-right:8px;" onclick="app.openSettings('${p.id}')">
             <strong style="color:${isCur ? 'var(--accent-light)' : '#fff'};">${p.name}</strong>
-            <div style="font-size:10.5px; color:var(--text-dim); font-family:var(--font-mono);">${p.url}</div>
+            <div style="font-size:10.5px; color:var(--text-dim); font-family:var(--font-mono); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.url}</div>
           </div>
-          <div style="display:flex; gap:6px;">
+          <div style="display:flex; gap:6px; flex-shrink:0;">
             ${!isCur ? `<button type="button" class="btn-secondary" style="font-size:11px; padding:3px 8px;" onclick="app.selectProfile('${p.id}')">切换</button>` : `<span class="badge" style="color:var(--accent);">当前</span>`}
             ${AppState.profiles.length > 1 ? `<button type="button" class="btn-secondary" style="font-size:11px; padding:3px 8px; color:var(--danger);" onclick="app.deleteProfile('${p.id}')">删除</button>` : ``}
           </div>
@@ -1428,3 +1473,178 @@
   window.app = app;
   document.addEventListener("DOMContentLoaded", () => app.init());
 })();
+
+  // Helper for generating clean, privacy-safe showcase screenshots without ugly mosaics
+  window.renderCleanShowcase = function(tabName) {
+    AppState.settings.gatewayUrl = "http://127.0.0.1:3425";
+    AppState.activeProfileId = "local_demo";
+    AppState.profiles = [
+      { id: "local_demo", name: "本地网关 (3425)", url: "http://127.0.0.1:3425", key: "" }
+    ];
+    document.getElementById("profileName").textContent = "本地网关 (3425)";
+    const dot = document.getElementById("statusDot");
+    if (dot) dot.className = "status-dot connected";
+
+    const demoQuotas = [
+      {
+        provider: "codex",
+        name: "Codex",
+        kind: "subscription",
+        plan: "plus",
+        user: "developer***@gmail.com",
+        windows: [
+          { name: "5 hours", used: 4, remaining: 96, resetsAt: new Date(Date.now() + 17820000).toISOString() },
+          { name: "7 days", used: 1, remaining: 99, resetsAt: new Date(Date.now() + 601200000).toISOString() }
+        ]
+      },
+      {
+        provider: "codex",
+        name: "Codex",
+        kind: "subscription",
+        plan: "plus",
+        user: "engineer***@gmail.com",
+        windows: [
+          { name: "5 hours", used: 0, remaining: 100, resetsAt: new Date(Date.now() + 17940000).toISOString() },
+          { name: "7 days", used: 0, remaining: 100, resetsAt: new Date(Date.now() + 604000000).toISOString() }
+        ]
+      },
+      {
+        provider: "devin",
+        name: "Devin",
+        kind: "subscription",
+        plan: "Team",
+        user: "team***@company.com",
+        windows: [
+          { name: "1 day", used: 31, remaining: 69, resetsAt: new Date(Date.now() + 4200000).toISOString() },
+          { name: "7 days", used: 66, remaining: 34, resetsAt: new Date(Date.now() + 4200000).toISOString() }
+        ],
+        balance: "$1.75"
+      },
+      {
+        provider: "antigravity",
+        name: "Antigravity",
+        kind: "subscription",
+        plan: "Google AI Pro",
+        user: "worker1***@gmail.com",
+        windows: [
+          { name: "Gemini · 7 days", used: 13, remaining: 87, resetsAt: new Date(Date.now() + 486000000).toISOString() },
+          { name: "Gemini · 5 hours", used: 1, remaining: 99, resetsAt: new Date(Date.now() + 720000).toISOString() },
+          { name: "Claude & GPT · 7 days", used: 0, remaining: 100, resetsAt: new Date(Date.now() + 410000000).toISOString() }
+        ]
+      },
+      {
+        provider: "antigravity",
+        name: "Antigravity",
+        kind: "subscription",
+        plan: "Google AI Pro",
+        user: "worker2***@gmail.com",
+        windows: [
+          { name: "Gemini · 7 days", used: 1, remaining: 99, resetsAt: new Date(Date.now() + 558000000).toISOString() },
+          { name: "Gemini · 5 hours", used: 0, remaining: 100, resetsAt: new Date(Date.now() + 360000).toISOString() }
+        ]
+      },
+      {
+        provider: "antigravity",
+        name: "Antigravity",
+        kind: "subscription",
+        plan: "Google AI Pro",
+        user: "worker3***@gmail.com",
+        windows: [
+          { name: "Gemini · 7 days", used: 2, remaining: 98, resetsAt: new Date(Date.now() + 486000000).toISOString() },
+          { name: "Gemini · 5 hours", used: 0, remaining: 100, resetsAt: new Date(Date.now() + 780000).toISOString() }
+        ]
+      },
+      {
+        provider: "antigravity",
+        name: "Antigravity",
+        kind: "subscription",
+        plan: "Google AI Pro",
+        user: "worker4***@gmail.com",
+        windows: [
+          { name: "Gemini · 7 days", used: 1, remaining: 99, resetsAt: new Date(Date.now() + 486000000).toISOString() },
+          { name: "Gemini · 5 hours", used: 0, remaining: 100, resetsAt: new Date(Date.now() + 840000).toISOString() }
+        ]
+      },
+      {
+        provider: "deepseek",
+        name: "DeepSeek",
+        kind: "wallet",
+        plan: "按量钱包",
+        balance: "¥18.12",
+        balanceSplit: [{ label: "Granted", text: "¥0.36" }, { label: "Topped up", text: "¥17.75" }]
+      },
+      {
+        provider: "openrouter",
+        name: "OpenRouter",
+        kind: "wallet",
+        plan: "按量钱包",
+        balance: "$3.24"
+      },
+      {
+        provider: "string-ai",
+        name: "String AI",
+        kind: "wallet",
+        plan: "按量钱包",
+        balance: "$9.75"
+      }
+    ];
+
+    const demoRequests = [
+      {
+        route_id: 1792869938333,
+        t: new Date().toISOString(),
+        agent: "codex",
+        agentName: "Codex",
+        provider: "antigravity",
+        providerName: "Antigravity",
+        providerAccount: "worker1***@gmail.com",
+        model: "gemini-3.8-flash",
+        req: "antigravity/gemini-3.8-flash",
+        served: "gemini-3.8-flash-n",
+        in: 2544,
+        out: 1627,
+        cache_read: 321161,
+        reasoning: 1419,
+        effort: "high",
+        ms: 6000,
+        ttft_ms: 5100,
+        flow_ms: 900,
+        own_ms: 35,
+        sent_ms: 1100,
+        first_text_ms: 5100,
+        status: 200,
+        cost: 0.032
+      }
+    ];
+
+    const demoModels = [
+      { id: "antigravity/gemini-3.8-flash", display_name: "Gemini 3.8 Flash", owned_by: "antigravity", context_window: 1048576, max_output_tokens: 65536, reasoning: true, modalities: { input: ["text", "image"] } },
+      { id: "codex/gpt-6.1-sol", display_name: "GPT-6.1-Sol", owned_by: "codex", context_window: 500000, max_output_tokens: 128000, reasoning: true, modalities: { input: ["text", "image"] } }
+    ];
+
+    AppState.cachedData.quotas = demoQuotas;
+    AppState.cachedData.requests = demoRequests;
+    AppState.cachedData.models = demoModels;
+    AppState.cachedData.requestsSummary = { calls: 923, retried: 15, errors: 22 };
+
+    if (tabName === "quotas") {
+      app.switchTab("quotas");
+      app.renderQuotas(demoQuotas);
+    } else if (tabName === "routing") {
+      app.switchTab("routing");
+      app.renderLiveRouting();
+    } else if (tabName === "cloudflare") {
+      app.switchTab("quotas");
+      app.renderQuotas(demoQuotas);
+      document.getElementById("cfgProfileName").value = "Cloudflare 远程";
+      document.getElementById("cfgGatewayUrl").value = "https://magpie.yourdomain.com";
+      document.getElementById("cfgGatewayKey").value = "sk-magpie-cf-secret-token";
+      const testBox = document.getElementById("testResultBox");
+      if (testBox) {
+        testBox.className = "test-result-box success";
+        testBox.style.display = "block";
+        testBox.textContent = "连接成功 (128ms)! 网关版本: v0.1.1435\n可用接口数: 21 挂载模型数: 25\n已通过 Cloudflare Tunnel HTTPS 安全通道建立连接。";
+      }
+      app.openSettings();
+    }
+  };

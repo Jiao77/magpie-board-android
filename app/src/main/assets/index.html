@@ -9,25 +9,31 @@
 </head>
 <body>
   <!-- Header -->
+    <!-- Header: 3-column clean responsive layout -->
   <header class="app-header">
-    <div class="brand">
+    <!-- 1. Left: Brand (Logo + Stacked Name & Version) -->
+    <div class="header-left">
       <div class="brand-logo">
         <svg viewBox="0 0 24 24">
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
         </svg>
       </div>
-      <div>
-        <div style="display:flex; align-items:center;">
-          <span class="brand-title">MagpieBoard</span>
-          <span id="magpieVersion" class="brand-version">v0.1</span>
-        </div>
+      <div class="brand-text-col">
+        <span class="brand-title">MagpieBoard</span>
+        <span id="magpieVersion" class="brand-version-sub">v0.1.1435</span>
       </div>
     </div>
-    <div class="header-actions">
+
+    <!-- 2. Center: Gateway Profile (takes all available width, cleanly truncates) -->
+    <div class="header-center">
       <div id="profileChip" class="profile-chip" title="切换网关">
         <div id="statusDot" class="status-dot connecting"></div>
         <span id="profileName" class="label">连接中...</span>
       </div>
+    </div>
+
+    <!-- 3. Right: Refresh & Settings Buttons -->
+    <div class="header-right">
       <button id="btnRefresh" class="icon-btn" title="刷新数据">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-1.19"/>
@@ -250,30 +256,33 @@
     </div>
   </main>
 
-  <!-- Settings Modal Sheet -->
+    <!-- Settings Modal Sheet -->
   <div id="settingsModal" class="modal-overlay">
     <div class="modal-sheet">
       <div class="modal-header">
-        <div class="modal-title">网关与连接设置</div>
-        <button class="icon-btn" onclick="app.closeSettings()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <div class="modal-title">网关与连接设置</div>
+          <span id="cfgModeBadge" class="badge" style="color:var(--accent);">编辑当前配置</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <button type="button" class="btn-secondary" style="font-size:11px; padding:5px 9px;" onclick="app.startNewProfile()">+ 新建配置</button>
+          <button class="icon-btn" onclick="app.closeSettings()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">当前配置名称</label>
+        <label class="form-label">配置名称 (Profile Name)</label>
         <input type="text" id="cfgProfileName" class="form-input" placeholder="例如：我的Magpie / 家里NAS / 远程网关">
       </div>
 
       <div class="form-group">
         <label class="form-label">Magpie 网关地址 (Gateway URL)</label>
-        <div class="form-row">
-          <input type="text" id="cfgGatewayUrl" class="form-input" placeholder="http://<局域网IP>:3425 或 https://<远程域名>">
-          <button type="button" class="btn-secondary" onclick="app.pasteToInput('cfgGatewayUrl')">粘贴</button>
-        </div>
+        <input type="text" id="cfgGatewayUrl" class="form-input" placeholder="http://<局域网IP>:3425 或 https://<远程域名>">
         <div class="quick-fill-row">
           <span class="quick-chip" onclick="app.quickFillUrl('http://localhost:3425')">localhost:3425</span>
           <span class="quick-chip" onclick="app.quickFillUrl('http://192.168.1.100:3425')">局域网示例</span>
@@ -284,7 +293,8 @@
       <div class="form-group">
         <label class="form-label">网关密钥 (Gateway Key / lanKey)</label>
         <div class="form-row">
-          <input type="password" id="cfgGatewayKey" class="form-input" placeholder="填入 settings.json 中的 lanKey 或自定义 Key">
+          <input type="password" id="cfgGatewayKey" class="form-input" placeholder="填入 settings.json 中的 lanKey 或自定义密钥">
+          
           <button type="button" class="btn-secondary" id="btnToggleKeyVisibility" onclick="app.toggleKeyVisibility()">显示</button>
         </div>
         <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
@@ -317,16 +327,21 @@
         </label>
       </div>
 
-      <button type="button" class="btn-primary" onclick="app.saveAndApplySettings()">
-        保存并立即连接
-      </button>
-
-      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:12px; color:var(--text-dim);">保存多个网关快速切换</span>
-        <button type="button" class="btn-secondary" style="font-size:11px; padding:6px 10px;" onclick="app.saveAsNewProfile()">保存为新配置</button>
+      <div style="margin-top:14px;">
+        <button type="button" id="btnSaveConfig" class="btn-primary" onclick="app.saveAndApplySettings()">
+          保存当前配置并连接
+        </button>
       </div>
-      <div id="savedProfilesList" style="margin-top:10px; display:flex; flex-direction:column; gap:6px;">
-        <!-- Profile items rendered here -->
+
+      <!-- Saved Profiles Section -->
+      <div style="margin-top:22px; padding-top:16px; border-top:1px solid var(--border-subtle);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-size:12.5px; font-weight:600; color:var(--text-main);">已保存的网关环境</span>
+          <button type="button" class="btn-secondary" style="font-size:11px; padding:4px 8px;" onclick="app.startNewProfile()">+ 添加配置</button>
+        </div>
+        <div id="savedProfilesList" style="display:flex; flex-direction:column; gap:6px;">
+          <!-- Profile items rendered here -->
+        </div>
       </div>
     </div>
   </div>
